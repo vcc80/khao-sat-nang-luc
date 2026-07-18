@@ -407,36 +407,84 @@ function validateAndCollect(){
   const noiLamSelect = document.getElementById('noiLam');
   hoTenInput.style.borderColor = hoTen ? '' : 'var(--danger)';
   noiLamSelect.style.borderColor = noiLam ? '' : 'var(--danger)';
-  if(!hoTen || !noiLam) hasError = true;
+  if(!hoTen || !noiLam){
+    hasError = true;
+    topError.classList.add('show');
+    hoTenInput.scrollIntoView({behavior:'smooth', block:'center'});
+    return null;
+  }
 
+  /* Bước 1: tìm các vị trí chưa chọn mức độ trong danh sách chính */
+  const missingTasks = [];
+  document.querySelectorAll('#taskList .task').forEach((taskEl)=>{
+    const select = taskEl.querySelector('.task-select');
+    if(!select.value){
+      missingTasks.push(taskEl);
+    } else {
+      taskEl.classList.remove('task-error');
+    }
+  });
+
+  /* Bước 1b: tìm các dòng "công việc khác" có tên nhưng chưa chọn mức độ */
+  const missingExtras = [];
+  document.querySelectorAll('#extraList .extra-row').forEach(row=>{
+    const name = row.querySelector('.extra-name').value.trim();
+    const level = row.querySelector('.extra-level').value;
+    if(name && !level){
+      missingExtras.push(row);
+    } else if(name){
+      row.style.outline = '';
+    }
+  });
+
+  if(missingTasks.length > 0 || missingExtras.length > 0){
+    const total = missingTasks.length + missingExtras.length;
+    const ok = confirm(`Bạn chưa chọn mức độ cho ${total} vị trí. Xác nhận những vị trí này bạn "0 - Chưa biết" phải không?\n\nNhấn OK để tự động chọn "Chưa biết" cho các vị trí đó, hoặc Hủy để quay lại chọn thủ công.`);
+    if(ok){
+      missingTasks.forEach(taskEl=>{
+        const select = taskEl.querySelector('.task-select');
+        select.value = "0";
+        taskEl.classList.remove('task-error');
+      });
+      missingExtras.forEach(row=>{
+        row.querySelector('.extra-level').value = "0";
+        row.style.outline = '';
+      });
+    } else {
+      missingTasks.forEach(taskEl=>taskEl.classList.add('task-error'));
+      missingExtras.forEach(row=>{
+        row.style.outline = '2px solid var(--danger)';
+        row.style.borderRadius = '10px';
+      });
+      topError.classList.add('show');
+      const firstMissing = missingTasks[0] || missingExtras[0];
+      if(firstMissing) firstMissing.scrollIntoView({behavior:'smooth', block:'center'});
+      return null;
+    }
+  }
+
+  /* Bước 2: bây giờ tất cả các mục đã có mức độ, kiểm tra bắt buộc "hay hỏi ai" cho mức 2 */
   const items = [];
   let firstErrorEl = null;
 
-  document.querySelectorAll('#taskList .task').forEach((taskEl, idx)=>{
+  document.querySelectorAll('#taskList .task').forEach((taskEl)=>{
     const select = taskEl.querySelector('.task-select');
     const val = select.value;
-    if(!val){
-      taskEl.classList.add('task-error');
+    const followupWrap = taskEl.parentElement.querySelector('.followup');
+    const followupInput = taskEl.parentElement.querySelector('.followup-input');
+    const ghichu = (val === "2" && followupInput) ? followupInput.value.trim() : "";
+
+    if(val === "2" && !ghichu){
+      followupInput.classList.add('input-error');
+      followupWrap.querySelector('.followup-error-msg').classList.add('show');
       hasError = true;
       if(!firstErrorEl) firstErrorEl = taskEl;
     } else {
-      taskEl.classList.remove('task-error');
-      const followupWrap = taskEl.parentElement.querySelector('.followup');
-      const followupInput = taskEl.parentElement.querySelector('.followup-input');
-      const ghichu = (val === "2" && followupInput) ? followupInput.value.trim() : "";
-
-      if(val === "2" && !ghichu){
-        followupInput.classList.add('input-error');
-        followupWrap.querySelector('.followup-error-msg').classList.add('show');
-        hasError = true;
-        if(!firstErrorEl) firstErrorEl = taskEl;
-      } else {
-        if(followupInput){
-          followupInput.classList.remove('input-error');
-          followupWrap.querySelector('.followup-error-msg').classList.remove('show');
-        }
-        items.push({ vitri: taskEl.dataset.name, mucdo: val, ghichu: ghichu });
+      if(followupInput){
+        followupInput.classList.remove('input-error');
+        followupWrap.querySelector('.followup-error-msg').classList.remove('show');
       }
+      items.push({ vitri: taskEl.dataset.name, mucdo: val, ghichu: ghichu });
     }
   });
 
@@ -444,22 +492,13 @@ function validateAndCollect(){
     const name = row.querySelector('.extra-name').value.trim();
     const level = row.querySelector('.extra-level').value;
     if(name){
-      if(!level){
-        row.style.outline = '2px solid var(--danger)';
-        row.style.borderRadius = '10px';
-        hasError = true;
-        if(!firstErrorEl) firstErrorEl = row;
-      } else {
-        row.style.outline = '';
-        items.push({ vitri: name, mucdo: level, ghichu: "" });
-      }
+      items.push({ vitri: name, mucdo: level, ghichu: "" });
     }
   });
 
   if(hasError){
     topError.classList.add('show');
-    const target = firstErrorEl || (!hoTen || !noiLam ? hoTenInput : null);
-    if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+    if(firstErrorEl) firstErrorEl.scrollIntoView({behavior:'smooth', block:'center'});
     return null;
   }
 
