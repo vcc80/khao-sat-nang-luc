@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khảo sát năng lực nhân viên</title>
+<style>
+  :root{
+    --primary:#0f766e;
+    --primary-dark:#0b5750;
+    --bg:#f4f6f5;
+    --card:#ffffff;
+    --border:#e2e8e6;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --danger:#dc2626;
+    --danger-bg:#fef2f2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:80px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    color:#fff;
+    padding:20px 16px 24px;
+    text-align:center;
+  }
+  header h1{margin:0 0 4px;font-size:19px;font-weight:700;}
+  header p{margin:0;font-size:13px;opacity:.9;}
+
+  .container{max-width:640px;margin:-14px auto 0;padding:0 12px;}
+
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+    border:1px solid var(--border);
+  }
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--primary-dark);}
+
+  label.field-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text);}
+  input[type=text], select{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid #cbd5d4;
+    border-radius:10px;
+    font-size:15px;
+    background:#fff;
+    margin-bottom:14px;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  select{
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 10px center;
+    background-size:18px;
+    padding-right:34px;
+  }
+  input[type=text]:focus, select:focus{outline:2px solid var(--primary);border-color:var(--primary);}
+
+  .task{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px 12px;
+    margin-bottom:8px;
+    background:#fbfcfc;
+    transition:.15s;
+  }
+  .task.task-error{
+    border-color:var(--danger);
+    background:var(--danger-bg);
+  }
+  .task-name{
+    flex:1;
+    font-size:14px;
+    font-weight:600;
+    color:var(--text);
+    line-height:1.3;
+  }
+  .task-select{
+    width:150px;
+    flex-shrink:0;
+    margin-bottom:0;
+    font-size:13.5px;
+    padding:9px 30px 9px 10px;
+  }
+  .task-error-msg{
+    font-size:11.5px;
+    color:var(--danger);
+    margin-top:4px;
+    display:none;
+  }
+  .task.task-error .task-error-msg{display:block;}
+  .task-block{margin-bottom:8px;}
+
+  .followup{
+    margin-top:8px;
+    display:none;
+  }
+  .followup.show{display:block;}
+  .followup input{margin-bottom:0;}
+  .followup label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px;}
+  .followup input.input-error{border-color:var(--danger);}
+  .followup-error-msg{font-size:11.5px;color:var(--danger);margin-top:4px;display:none;}
+  .followup-error-msg.show{display:block;}
+
+  .extra-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .extra-row input[type=text]{margin-bottom:0;flex:1;}
+  .extra-row select{margin-bottom:0;width:150px;flex-shrink:0;}
+  .remove-btn{
+    background:#fee2e2;color:#b91c1c;border:none;border-radius:8px;
+    width:38px;flex-shrink:0;font-size:16px;cursor:pointer;
+  }
+  .add-btn{
+    width:100%;
+    padding:11px;
+    border:1.5px dashed var(--primary);
+    background:#fff;
+    color:var(--primary-dark);
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:4px;
+  }
+
+  .submit-bar{
+    position:fixed;bottom:0;left:0;right:0;
+    background:#fff;
+    border-top:1px solid var(--border);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex;
+    gap:10px;
+    justify-content:center;
+  }
+  .submit-btn, .secondary-btn{
+    max-width:640px;
+    flex:1;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .submit-btn{background:var(--primary);color:#fff;}
+  .submit-btn:disabled{opacity:.6;}
+  .secondary-btn{background:#eef2f1;color:var(--text);flex:.6;}
+
+  .top-error{
+    color:var(--danger);
+    font-size:13px;
+    margin:-6px 0 12px;
+    display:none;
+    background:var(--danger-bg);
+    padding:10px 12px;
+    border-radius:8px;
+    font-weight:600;
+  }
+  .top-error.show{display:block;}
+
+  .success-screen{
+    display:none;
+    text-align:center;
+    padding:60px 20px;
+  }
+  .success-screen.show{display:block;}
+  .success-screen .check{font-size:56px;margin-bottom:12px;}
+  .success-screen h2{color:var(--primary-dark);margin-bottom:8px;}
+  .success-screen p{color:var(--muted);margin-bottom:20px;}
+  .again-btn{
+    padding:12px 24px;background:var(--primary);color:#fff;border:none;
+    border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .hidden{display:none !important;}
+
+  /* Summary screen */
+  .summary-header{
+    background:#eef6f5;
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:14px;
+    font-size:13.5px;
+  }
+  .summary-header b{color:var(--primary-dark);}
+  .summary-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .summary-row:last-child{border-bottom:none;}
+  .summary-name{font-size:13.5px;font-weight:600;flex:1;line-height:1.3;}
+  .summary-note{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .badge{
+    flex-shrink:0;
+    font-size:11.5px;
+    font-weight:700;
+    padding:4px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .badge-0{background:#f3f4f6;color:#6b7280;}
+  .badge-1{background:#fef3c7;color:#92400e;}
+  .badge-2{background:#dbeafe;color:#1e40af;}
+  .badge-3{background:#d1fae5;color:#065f46;}
+  .badge-4{background:#ede9fe;color:#5b21b6;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>KHẢO SÁT NĂNG LỰC NHÂN VIÊN</h1>
+  <p>Tự đánh giá khả năng làm việc theo từng vị trí</p>
+</header>
+
+<div class="container" id="formWrap">
+
+  <div class="card">
+    <h2>Thông tin nhân viên</h2>
+    <label class="field-label">Họ và tên *</label>
+    <input type="text" id="hoTen" placeholder="Nguyễn Văn A">
+
+    <label class="field-label">Nơi làm *</label>
+    <select id="noiLam">
+      <option value="">-- Chọn nơi làm --</option>
+      <option value="DY1">DY1</option>
+      <option value="DY2">DY2</option>
+      <option value="DY3">DY3</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>Danh sách công việc — chọn mức độ thành thạo</h2>
+    <div class="top-error" id="topError">Vui lòng điền đầy đủ thông tin và chọn mức độ cho TẤT CẢ vị trí được đánh dấu đỏ bên dưới.</div>
+    <div id="taskList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Công việc khác (nếu có, không có trong danh sách)</h2>
+    <div id="extraList"></div>
+    <button type="button" class="add-btn" id="addExtraBtn">+ Thêm công việc khác</button>
+  </div>
+
+</div>
+
+<!-- Màn hình xác nhận -->
+<div class="container hidden" id="summaryWrap">
+  <div class="card">
+    <h2>Xác nhận thông tin trước khi gửi</h2>
+    <div class="summary-header">
+      Họ tên: <b id="sumHoTen"></b><br>
+      Nơi làm: <b id="sumNoiLam"></b>
+    </div>
+    <div id="summaryList"></div>
+  </div>
+</div>
+
+<div class="success-screen" id="successScreen">
+  <div class="check">✅</div>
+  <h2>Đã gửi khảo sát!</h2>
+  <p>Cảm ơn bạn đã hoàn thành khảo sát năng lực.</p>
+  <button class="again-btn" id="againBtn">Làm khảo sát khác</button>
+</div>
+
+<div class="submit-bar" id="submitBar">
+  <button class="submit-btn" id="reviewBtn">Xem lại &amp; Gửi</button>
+</div>
+
+<div class="submit-bar hidden" id="summaryBar">
+  <button class="secondary-btn" id="backBtn">Quay lại sửa</button>
+  <button class="submit-btn" id="confirmBtn">Xác nhận gửi</button>
+</div>
+
+<script>
+/* ====== CẤU HÌNH: dán link Google Apps Script Web App của bạn vào đây ====== */
+const WEBAPP_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+/* ========================================================================== */
+
+const TASKS = [
+"QUẦY THUỐC - THU NGÂN QT","BẢNG KÊ GIẤY NGHỈ","HƯỚNG DẪN PHÂN LUỒNG","NHẬN BỆNH",
+"CẤP CỨU","X QUANG","LẤY MÁU - CHÍCH - TRUYỀN","ĐIỆN TIM","ĐIỆN NÃO","THU NGÂN L1",
+"PHỤ BÁC SỸ","PHỤ SIÊU ÂM","TIẾP NHẬN KSK","BÁN BẢO HIỂM","XÉT NGHIỆM","KHO THUỐC",
+"KHO VẬT TƯ","HỒ SƠ CHÍNH","HỒ SƠ PHỤ","CHÂM CỨU","TẬP VẬN ĐỘNG","YHCT KHÁC",
+"THU NGÂN YHCT","LÀM HS YHCT","HÀNH CHÁNH YHCT","HS BỆNH ÁN NỘI","HS BỆNH ÁN RHM",
+"PHỤ RHM","HÀNH CHÁNH RHM","THAY BĂNG","TIỂU PHẪU","BÓ BỘT","NỘI SOI THM",
+"KHÍ DUNG - RỬA MŨI","ĐO THÍNH LỰC","PHỤ NHA"
+];
+
+const LEVELS = [
+  {v:"0", label:"Chưa biết"},
+  {v:"1", label:"Đang học"},
+  {v:"2", label:"Làm được nhưng còn hỏi"},
+  {v:"3", label:"Làm độc lập"},
+  {v:"4", label:"Có thể đào tạo người khác"}
+];
+const LEVEL_MAP = {};
+LEVELS.forEach(l=>LEVEL_MAP[l.v]=l.label);
+
+const taskListEl = document.getElementById('taskList');
+const extraListEl = document.getElementById('extraList');
+
+function levelOptionsHtml(){
+  return `<option value="">-- Chọn --</option>` +
+    LEVELS.map(lv=>`<option value="${lv.v}">${lv.v} - ${lv.label}</option>`).join('');
+}
+
+function buildTaskBlock(name, idx){
+  const wrap = document.createElement('div');
+  wrap.className = 'task-block';
+
+  const row = document.createElement('div');
+  row.className = 'task';
+  row.dataset.name = name;
+
+  const title = document.createElement('div');
+  title.className = 'task-name';
+  title.textContent = name;
+  row.appendChild(title);
+
+  const select = document.createElement('select');
+  select.className = 'task-select';
+  select.name = `level_${idx}`;
+  select.innerHTML = levelOptionsHtml();
+  row.appendChild(select);
+
+  wrap.appendChild(row);
+
+  const errMsg = document.createElement('div');
+  errMsg.className = 'task-error-msg';
+  errMsg.textContent = 'Vui lòng chọn mức độ cho vị trí này';
+  row.appendChild(errMsg);
+
+  const followup = document.createElement('div');
+  followup.className = 'followup';
+  followup.innerHTML = `<label>Bạn hay hỏi những ai? *</label><input type="text" class="followup-input" placeholder="Tên người bạn hay hỏi"><div class="followup-error-msg">Vui lòng cho biết bạn hay hỏi những ai</div>`;
+  wrap.appendChild(followup);
+
+  select.addEventListener('change', ()=>{
+    if(select.value !== ""){
+      row.classList.remove('task-error');
+    }
+    if(select.value === "2"){
+      followup.classList.add('show');
+    } else {
+      followup.classList.remove('show');
+      const fi = followup.querySelector('.followup-input');
+      fi.classList.remove('input-error');
+      followup.querySelector('.followup-error-msg').classList.remove('show');
+    }
+  });
+
+  const followupInputEl = followup.querySelector('.followup-input');
+  followupInputEl.addEventListener('input', ()=>{
+    if(followupInputEl.value.trim()){
+      followupInputEl.classList.remove('input-error');
+      followup.querySelector('.followup-error-msg').classList.remove('show');
+    }
+  });
+
+  return wrap;
+}
+
+TASKS.forEach((name, idx)=>{
+  taskListEl.appendChild(buildTaskBlock(name, idx));
+});
+
+/* ---- Công việc khác (tự thêm) ---- */
+function addExtraRow(){
+  const row = document.createElement('div');
+  row.className = 'extra-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Tên công việc" class="extra-name">
+    <select class="extra-level">${levelOptionsHtml()}</select>
+    <button type="button" class="remove-btn">✕</button>
+  `;
+  row.querySelector('.remove-btn').addEventListener('click', ()=>row.remove());
+  extraListEl.appendChild(row);
+}
+document.getElementById('addExtraBtn').addEventListener('click', addExtraRow);
+
+/* ---- Validate + thu thập dữ liệu ---- */
+function validateAndCollect(){
+  const hoTen = document.getElementById('hoTen').value.trim();
+  const noiLam = document.getElementById('noiLam').value;
+  let hasError = false;
+  const topError = document.getElementById('topError');
+
+  const hoTenInput = document.getElementById('hoTen');
+  const noiLamSelect = document.getElementById('noiLam');
+  hoTenInput.style.borderColor = hoTen ? '' : 'var(--danger)';
+  noiLamSelect.style.borderColor = noiLam ? '' : 'var(--danger)';
+  if(!hoTen || !noiLam) hasError = true;
+
+  const items = [];
+  let firstErrorEl = null;
+
+  document.querySelectorAll('#taskList .task').forEach((taskEl, idx)=>{
+    const select = taskEl.querySelector('.task-select');
+    const val = select.value;
+    if(!val){
+      taskEl.classList.add('task-error');
+      hasError = true;
+      if(!firstErrorEl) firstErrorEl = taskEl;
+    } else {
+      taskEl.classList.remove('task-error');
+      const followupWrap = taskEl.parentElement.querySelector('.followup');
+      const followupInput = taskEl.parentElement.querySelector('.followup-input');
+      const ghichu = (val === "2" && followupInput) ? followupInput.value.trim() : "";
+
+      if(val === "2" && !ghichu){
+        followupInput.classList.add('input-error');
+        followupWrap.querySelector('.followup-error-msg').classList.add('show');
+        hasError = true;
+        if(!firstErrorEl) firstErrorEl = taskEl;
+      } else {
+        if(followupInput){
+          followupInput.classList.remove('input-error');
+          followupWrap.querySelector('.followup-error-msg').classList.remove('show');
+        }
+        items.push({ vitri: taskEl.dataset.name, mucdo: val, ghichu: ghichu });
+      }
+    }
+  });
+
+  document.querySelectorAll('#extraList .extra-row').forEach(row=>{
+    const name = row.querySelector('.extra-name').value.trim();
+    const level = row.querySelector('.extra-level').value;
+    if(name){
+      if(!level){
+        row.style.outline = '2px solid var(--danger)';
+        row.style.borderRadius = '10px';
+        hasError = true;
+        if(!firstErrorEl) firstErrorEl = row;
+      } else {
+        row.style.outline = '';
+        items.push({ vitri: name, mucdo: level, ghichu: "" });
+      }
+    }
+  });
+
+  if(hasError){
+    topError.classList.add('show');
+    const target = firstErrorEl || (!hoTen || !noiLam ? hoTenInput : null);
+    if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+    return null;
+  }
+
+  topError.classList.remove('show');
+  return { hoTen, noiLam, items, timestamp: new Date().toISOString() };
+}
+
+/* ---- Hiện màn hình tổng kết ---- */
+let pendingData = null;
+
+function renderSummary(data){
+  document.getElementById('sumHoTen').textContent = data.hoTen;
+  document.getElementById('sumNoiLam').textContent = data.noiLam;
+
+  const list = document.getElementById('summaryList');
+  list.innerHTML = '';
+  data.items.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'summary-row';
+    const noteHtml = item.ghichu ? `<div class="summary-note">Hay hỏi: ${item.ghichu}</div>` : '';
+    row.innerHTML = `
+      <div class="summary-name">${item.vitri}${noteHtml}</div>
+      <div class="badge badge-${item.mucdo}">${item.mucdo} - ${LEVEL_MAP[item.mucdo] || ''}</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('reviewBtn').addEventListener('click', ()=>{
+  const data = validateAndCollect();
+  if(!data) return;
+  pendingData = data;
+  renderSummary(data);
+  document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('submitBar').classList.add('hidden');
+  document.getElementById('summaryWrap').classList.remove('hidden');
+  document.getElementById('summaryBar').classList.remove('hidden');
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+document.getElementById('backBtn').addEventListener('click', ()=>{
+  document.getElementById('summaryWrap').classList.add('hidden');
+  document.getElementById('summaryBar').classList.add('hidden');
+  document.getElementById('formWrap').classList.remove('hidden');
+  document.getElementById('submitBar').classList.remove('hidden');
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+document.getElementById('confirmBtn').addEventListener('click', async ()=>{
+  if(!pendingData) return;
+  const btn = document.getElementById('confirmBtn');
+  btn.disabled = true;
+  btn.textContent = "Đang gửi...";
+
+  try{
+    if(WEBAPP_URL.indexOf("PASTE_YOUR") !== -1){
+      alert("Chưa cấu hình link Google Apps Script (WEBAPP_URL) trong file HTML.");
+      btn.disabled = false;
+      btn.textContent = "Xác nhận gửi";
+      return;
+    }
+    await fetch(WEBAPP_URL, {
+      method: "POST",
+      body: JSON.stringify(pendingData)
+    });
+    document.getElementById('summaryWrap').classList.add('hidden');
+    document.getElementById('summaryBar').classList.add('hidden');
+    document.getElementById('successScreen').classList.add('show');
+  }catch(err){
+    alert("Có lỗi khi gửi khảo sát, vui lòng thử lại.\n" + err);
+    btn.disabled = false;
+    btn.textContent = "Xác nhận gửi";
+  }
+});
+
+document.getElementById('againBtn').addEventListener('click', ()=>{
+  location.reload();
+});
+</script>
+</body>
+</html>
